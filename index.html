@@ -8,21 +8,24 @@
 <style>
 body{
     font-family: Arial, sans-serif;
-    background:#faf8ef;
     text-align:center;
+    background:#faf8ef;
+    color:#776e65;
     margin:20px;
 }
 
-h1{
-    color:#776e65;
+body.dark{
+    background:#1e1e1e;
+    color:#f5f5f5;
 }
 
-#modeSelect{
-    margin-bottom:15px;
+h1{
+    margin-bottom:20px;
 }
 
 #modeSelect button,
-#restartBtn{
+#restartBtn,
+#themeBtn{
     padding:10px 15px;
     margin:5px;
     border:none;
@@ -33,15 +36,10 @@ h1{
     color:white;
 }
 
-#modeSelect button:hover,
-#restartBtn:hover{
-    opacity:0.9;
-}
-
-#score, #best{
+#score,
+#best{
     font-size:24px;
     margin:10px;
-    color:#776e65;
 }
 
 #board{
@@ -62,7 +60,11 @@ h1{
     color:#776e65;
 }
 
-#winModal{
+body.dark #board{
+    background:#444;
+}
+
+#modal{
     display:none;
     position:fixed;
     top:0;
@@ -74,19 +76,14 @@ h1{
     align-items:center;
 }
 
-#winContent{
+#modalContent{
     background:white;
     padding:30px;
     border-radius:12px;
-    text-align:center;
-}
-
-#winContent button{
-    padding:10px 20px;
-    font-size:16px;
-    cursor:pointer;
+    color:black;
 }
 </style>
+
 </head>
 
 <body>
@@ -103,30 +100,30 @@ h1{
 <div id="score">Score: 0</div>
 <div id="best">Best: 0</div>
 
-<div id="board"></div>
-
 <button id="restartBtn" onclick="startGame(SIZE)">
-Restart
+重新開始
 </button>
 
-<!-- 勝利畫面 -->
-<div id="winModal">
-    <div id="winContent">
-        <h2>🎉 Congratulations！</h2>
-        <p>你成功達成 2048！</p>
-        <button onclick="closeWinModal()">繼續遊戲</button>
+<button id="themeBtn" onclick="toggleTheme()">
+🌙 深色模式
+</button>
+
+<div id="board"></div>
+
+<div id="modal">
+    <div id="modalContent">
+        <h2 id="modalTitle"></h2>
+
+        <button onclick="closeModal()">
+            繼續遊戲
+        </button>
     </div>
 </div>
 
 <script>
-
 let SIZE = 4;
 let score = 0;
 let board = [];
-
-let bestScore =
-    Number(localStorage.getItem("bestScore")) || 0;
-
 let hasWon = false;
 
 function startGame(size){
@@ -143,8 +140,12 @@ function startGame(size){
         6:620
     }[SIZE];
 
-    boardDiv.style.width = boardPx + "px";
-    boardDiv.style.height = boardPx + "px";
+    boardDiv.style.width =
+        boardPx + "px";
+
+    boardDiv.style.height =
+        boardPx + "px";
+
     boardDiv.style.gridTemplateColumns =
         `repeat(${SIZE},1fr)`;
 
@@ -155,12 +156,15 @@ function init(){
 
     board = Array(SIZE)
         .fill()
-        .map(()=>Array(SIZE).fill(0));
+        .map(() =>
+            Array(SIZE).fill(0)
+        );
 
     score = 0;
+
     hasWon = false;
 
-    document.getElementById("winModal")
+    document.getElementById("modal")
         .style.display = "none";
 
     addNumber();
@@ -174,17 +178,28 @@ function addNumber(){
     let empty = [];
 
     for(let r=0;r<SIZE;r++){
+
         for(let c=0;c<SIZE;c++){
+
             if(board[r][c]===0){
+
                 empty.push([r,c]);
             }
         }
     }
 
-    if(empty.length===0) return;
+    if(empty.length===0){
+
+        return;
+    }
 
     let [r,c] =
-        empty[Math.floor(Math.random()*empty.length)];
+        empty[
+            Math.floor(
+                Math.random() *
+                empty.length
+            )
+        ];
 
     board[r][c] =
         Math.random()<0.9 ? 2 : 4;
@@ -193,6 +208,7 @@ function addNumber(){
 function getColor(value){
 
     const colors = {
+
         0:"#cdc1b4",
         2:"#eee4da",
         4:"#ede0c8",
@@ -213,48 +229,85 @@ function getColor(value){
 function draw(){
 
     const boardDiv =
-        document.getElementById("board");
+        document.getElementById(
+            "board"
+        );
 
     boardDiv.innerHTML = "";
 
-    document.getElementById("score")
-        .textContent = "Score: " + score;
+    document.getElementById(
+        "score"
+    ).textContent =
+        "Score: " + score;
+
+    let bestScore =
+        Number(
+            localStorage.getItem(
+                `bestScore${SIZE}`
+            )
+        ) || 0;
 
     if(score > bestScore){
+
         bestScore = score;
+
         localStorage.setItem(
-            "bestScore",
+            `bestScore${SIZE}`,
             bestScore
         );
     }
 
-    document.getElementById("best")
-        .textContent = "Best: " + bestScore;
+    document.getElementById(
+        "best"
+    ).textContent =
+        `Best (${SIZE}×${SIZE}): `
+        + bestScore;
 
     const tileSize =
-        Math.floor((boardDiv.clientWidth -
-        (SIZE+1)*10)/SIZE);
+        Math.floor(
+            (
+                boardDiv.clientWidth -
+                (SIZE+1)*10
+            ) / SIZE
+        );
 
     for(let r=0;r<SIZE;r++){
+
         for(let c=0;c<SIZE;c++){
 
             let tile =
-                document.createElement("div");
+                document.createElement(
+                    "div"
+                );
 
-            tile.className = "tile";
+            tile.className =
+                "tile";
 
-            tile.style.width = tileSize + "px";
-            tile.style.height = tileSize + "px";
+            tile.style.width =
+                tileSize + "px";
+
+            tile.style.height =
+                tileSize + "px";
+
             tile.style.fontSize =
-                Math.max(18,tileSize/3)+"px";
+                Math.max(
+                    18,
+                    tileSize/3
+                ) + "px";
 
             tile.style.background =
-                getColor(board[r][c]);
+                getColor(
+                    board[r][c]
+                );
 
             tile.textContent =
-                board[r][c]===0 ? "" : board[r][c];
+                board[r][c]===0
+                ? ""
+                : board[r][c];
 
-            boardDiv.appendChild(tile);
+            boardDiv.appendChild(
+                tile
+            );
         }
     }
 }
@@ -263,19 +316,30 @@ function slide(row){
 
     row = row.filter(v=>v);
 
-    for(let i=0;i<row.length-1;i++){
+    for(
+        let i=0;
+        i<row.length-1;
+        i++
+    ){
 
-        if(row[i]===row[i+1]){
+        if(
+            row[i]===row[i+1]
+        ){
 
             row[i] *= 2;
+
             score += row[i];
+
             row[i+1] = 0;
         }
     }
 
     row = row.filter(v=>v);
 
-    while(row.length<SIZE){
+    while(
+        row.length < SIZE
+    ){
+
         row.push(0);
     }
 
@@ -284,10 +348,13 @@ function slide(row){
 
 function moveLeft(){
 
-    let old = JSON.stringify(board);
+    let old =
+        JSON.stringify(board);
 
     for(let r=0;r<SIZE;r++){
-        board[r] = slide(board[r]);
+
+        board[r] =
+            slide(board[r]);
     }
 
     afterMove(old);
@@ -295,33 +362,43 @@ function moveLeft(){
 
 function moveRight(){
 
-    let old = JSON.stringify(board);
+    let old =
+        JSON.stringify(board);
 
     for(let r=0;r<SIZE;r++){
+
         board[r].reverse();
-        board[r] = slide(board[r]);
+
+        board[r] =
+            slide(board[r]);
+
         board[r].reverse();
     }
 
     afterMove(old);
 }
+    function moveUp(){
 
-function moveUp(){
-
-    let old = JSON.stringify(board);
+    let old =
+        JSON.stringify(board);
 
     for(let c=0;c<SIZE;c++){
 
-        let col=[];
+        let col = [];
 
         for(let r=0;r<SIZE;r++){
-            col.push(board[r][c]);
+
+            col.push(
+                board[r][c]
+            );
         }
 
         col = slide(col);
 
         for(let r=0;r<SIZE;r++){
-            board[r][c]=col[r];
+
+            board[r][c] =
+                col[r];
         }
     }
 
@@ -330,22 +407,30 @@ function moveUp(){
 
 function moveDown(){
 
-    let old = JSON.stringify(board);
+    let old =
+        JSON.stringify(board);
 
     for(let c=0;c<SIZE;c++){
 
-        let col=[];
+        let col = [];
 
         for(let r=0;r<SIZE;r++){
-            col.push(board[r][c]);
+
+            col.push(
+                board[r][c]
+            );
         }
 
         col.reverse();
+
         col = slide(col);
+
         col.reverse();
 
         for(let r=0;r<SIZE;r++){
-            board[r][c]=col[r];
+
+            board[r][c] =
+                col[r];
         }
     }
 
@@ -354,15 +439,25 @@ function moveDown(){
 
 function afterMove(old){
 
-    if(old !== JSON.stringify(board)){
+    if(
+        old !==
+        JSON.stringify(board)
+    ){
 
         addNumber();
+
         checkWin();
+
         draw();
 
         if(isGameOver()){
+
             setTimeout(()=>{
-                alert("Game Over!");
+
+                showModal(
+                    "💀 Game Over"
+                );
+
             },100);
         }
     }
@@ -373,11 +468,17 @@ function checkWin(){
     if(hasWon) return;
 
     for(let row of board){
-        for(let v of row){
-            if(v >= 2048){
+
+        for(let value of row){
+
+            if(value >= 2048){
+
                 hasWon = true;
-                document.getElementById("winModal")
-                    .style.display = "flex";
+
+                showModal(
+                    "🎉 恭喜達成 2048！"
+                );
+
                 return;
             }
         }
@@ -387,49 +488,118 @@ function checkWin(){
 function isGameOver(){
 
     for(let r=0;r<SIZE;r++){
+
         for(let c=0;c<SIZE;c++){
 
-            if(board[r][c]===0)
-                return false;
+            if(
+                board[r][c]===0
+            ){
 
-            if(c<SIZE-1 &&
-               board[r][c]===board[r][c+1])
                 return false;
+            }
 
-            if(r<SIZE-1 &&
-               board[r][c]===board[r+1][c])
+            if(
+                c<SIZE-1 &&
+                board[r][c]===
+                board[r][c+1]
+            ){
+
                 return false;
+            }
+
+            if(
+                r<SIZE-1 &&
+                board[r][c]===
+                board[r+1][c]
+            ){
+
+                return false;
+            }
         }
     }
 
     return true;
 }
 
-function closeWinModal(){
-    document.getElementById("winModal")
-        .style.display = "none";
+function showModal(title){
+
+    document.getElementById(
+        "modalTitle"
+    ).textContent = title;
+
+    document.getElementById(
+        "modal"
+    ).style.display = "flex";
 }
 
-document.addEventListener("keydown",(e)=>{
+function closeModal(){
 
-    switch(e.key){
+    document.getElementById(
+        "modal"
+    ).style.display = "none";
+}
 
-        case "ArrowLeft":
-            moveLeft(); break;
+function toggleTheme(){
 
-        case "ArrowRight":
-            moveRight(); break;
+    document.body
+        .classList
+        .toggle("dark");
 
-        case "ArrowUp":
-            moveUp(); break;
+    localStorage.setItem(
 
-        case "ArrowDown":
-            moveDown(); break;
+        "darkMode",
+
+        document.body
+            .classList
+            .contains("dark")
+    );
+}
+
+document.addEventListener(
+
+    "keydown",
+
+    (e)=>{
+
+        switch(e.key){
+
+            case "ArrowLeft":
+
+                moveLeft();
+                break;
+
+            case "ArrowRight":
+
+                moveRight();
+                break;
+
+            case "ArrowUp":
+
+                moveUp();
+                break;
+
+            case "ArrowDown":
+
+                moveDown();
+                break;
+        }
     }
-});
+);
+
+if(
+
+    localStorage.getItem(
+        "darkMode"
+    ) === "true"
+
+){
+
+    document.body
+        .classList
+        .add("dark");
+}
 
 startGame(4);
-
 </script>
 
 </body>
